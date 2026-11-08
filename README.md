@@ -4,6 +4,38 @@ The graph changes the answer. Inspect normalized spectral clustering through eve
 
 [Live graph inspector](https://midya8.github.io/spectrallab/) · [Method and limits](METHOD.md) · [Reproducible archive](examples/report.json)
 
+
+## v0.2: smooth geometry, discrete labels
+
+[Open the graph-weight sensitivity inspector](https://midya8.github.io/spectrallab/sensitivity.html).
+Manual normalized-Laplacian derivatives include both degree responses; a
+basis-invariant spectral projector derivative uses only cross-boundary
+spectral denominators. Four original base graphs have 28 fixed finite states,
+including a five-cycle boundary refusal. A six-cycle and an isolated vertex
+are refused at the base. Internal repeated eigenvalues are retained safely;
+no epsilon is added to a boundary gap.
+
+Actual finite eigensolves and 12-start k-means stay separate from first-order
+geometry. Shared-scale matrix heatmaps, scalar row witnesses, fixed-label
+cut derivatives, all states and full restart histories make approximation
+error and near-tied rounding partitions inspectable. The archived path's tiny
+label change reflects numerically equal tested rounding objectives, not a
+unique geometric optimum or a robustness result. No coordinate derivative,
+learned graph, label gradient, finite-step guarantee or new performance claim.
+
+The full suite is now 33 Python and nine Node/Chrome tests. New controls include
+83 full degree-response finite differences, 42 exact Fraction cut derivatives,
+analytic and repeated-block projector controls, internal-basis rotations,
+146 scalar full-base eigenpair equations, 1,022 matrix row cells and 168 actual
+browser case/step/row states. Installed-wheel reproduction includes the new
+module and four sensitivity commands. [Derivation, protocol and sources](SENSITIVITY.md).
+
+```sh
+python -m spectrallab.sensitivity build sensitivity.json
+python -m spectrallab.sensitivity audit sensitivity.json
+python -m spectrallab.sensitivity export examples/sensitivity.json > docs/sensitivity-data.js
+```
+
 ## What runs
 
 - Manual full RBF, union-kNN and mutual-kNN graphs, with explicit zero self-loops and distance/index tie order.
