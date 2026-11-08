@@ -46,6 +46,10 @@ class GraphTests(unittest.TestCase):
         for x in ([[0]], [[0],[1]], [[0],[1],[math.inf]]):
             with self.assertRaises(ValueError): graph(x)
 
+        with self.assertRaises(ValueError): spectral([[0,1],[1,0]])
+        for value in (0, -1, True, 2.5):
+            with self.assertRaises(ValueError): kmeans([[0],[1],[2]], max_iter=value)
+
     def test_graph_components_refusal(self):
         isolated = np.zeros((6,6)); isolated[0,1] = isolated[1,0] = 1
         self.assertEqual(spectral(isolated)['status'], 'refused-isolated')
