@@ -40,5 +40,5 @@ class CliTests(unittest.TestCase):
 
     def test_module_api_imports_and_real_graph(self):
         import spectrallab
-        self.assertEqual(spectrallab.__version__,'0.1.0')
+        self.assertEqual(spectrallab.__version__,'0.2.0')
         self.assertEqual(len(spectrallab.graph([[0],[1],[2]],neighbors=1)),3)
