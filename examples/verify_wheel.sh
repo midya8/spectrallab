@@ -7,7 +7,7 @@ trap 'rm -rf "$TEMP"' EXIT
 cd "$TEMP"
 unset PYTHONPATH
 export OPENBLAS_NUM_THREADS=1
-python -c 'import spectrallab,spectrallab.core,spectrallab.data,spectrallab.report,spectrallab.__main__; print("5 installed modules",spectrallab.__version__)'
+python -c 'import spectrallab,spectrallab.core,spectrallab.data,spectrallab.report,spectrallab.__main__,spectrallab.sensitivity; print("6 installed modules",spectrallab.__version__)'
 python -m spectrallab fit --output fresh.json
 python -m spectrallab audit fresh.json
 python -m spectrallab export fresh.json --output fresh-web
@@ -22,3 +22,9 @@ for name in ('moons','circles','data'):
 r=json.loads(Path('fresh.json').read_text());assert len(r['datasets'])==2
 print('5 commands, 18 fresh graph fits, both audits and 3 exact archived exports PASS')
 PY
+python -m spectrallab.sensitivity build sensitivity-fresh.json
+python -m spectrallab.sensitivity audit sensitivity-fresh.json
+python -m spectrallab.sensitivity audit "$ROOT/examples/sensitivity.json"
+python -m spectrallab.sensitivity export "$ROOT/examples/sensitivity.json" >sensitivity-data.js
+cmp sensitivity-data.js "$ROOT/docs/sensitivity-data.js"
+printf '%s\n' '4 sensitivity commands, 6 cases, 28 finite states, archive audit and exact browser export PASS'
