@@ -1,0 +1,37 @@
+'use strict';
+const $=id=>document.getElementById(id),D=SPECTRAL_SENSITIVITY,S=SpectralSensitivity,NS='http://www.w3.org/2000/svg';
+const number=x=>x===null||x===undefined?'refused':Math.abs(x)<1e-5&&x!==0?x.toExponential(3):x.toFixed(6);
+const svg=(tag,attributes,parent,text)=>{const n=document.createElementNS(NS,tag);for(const [k,v]of Object.entries(attributes))n.setAttribute(k,v);if(text!==undefined)n.textContent=text;parent.append(n);return n;};
+const tableRow=(parent,cells)=>{const tr=document.createElement('tr');for(const x of cells){const td=document.createElement('td');td.textContent=x;tr.append(td);}parent.append(tr);};
+let selected;
+function graph(c,state){
+ const host=$('changed-graph');host.replaceChildren();const t=state?.step||0,w=S.graph(c,t),n=w.length;
+ const coordinates=Array.from({length:n},(_,i)=>[240+136*Math.cos(2*Math.PI*i/n-Math.PI/2),175+125*Math.sin(2*Math.PI*i/n-Math.PI/2)]);
+ const max=Math.max(...w.flat()),labels=state?.fit.status==='ok'?state.fit.fit.labels:null;
+ for(let i=0;i<n;i++)for(let j=i+1;j<n;j++)if(w[i][j]>0){const isEdge=(i===c.edge[0]&&j===c.edge[1])||(j===c.edge[0]&&i===c.edge[1]);svg('line',{x1:coordinates[i][0],y1:coordinates[i][1],x2:coordinates[j][0],y2:coordinates[j][1],stroke:isEdge?'#b86c38':'#98aaa0','stroke-width':isEdge?4:1+3*w[i][j]/max,'stroke-opacity':isEdge?1:.6},host);}
+ for(let i=0;i<n;i++){const [x,y]=coordinates[i];svg('circle',{cx:x,cy:y,r:15,fill:labels?(labels[i]===0?'#24736c':'#b86c38'):'#64706a','data-node':i},host);svg('text',{x,y:y+5,'text-anchor':'middle',style:'fill:white;font-size:13px'},host,String(i));}
+ $('graph-caption').textContent=`${c.title}. Highlighted edge ${c.edge.join('-')}; weight ${number(w[c.edge[0]][c.edge[1]])}. ${labels?'Colors are actual refitted labels.':'No cluster colors are invented for a refusal.'}`;
+}
+function heatmap(id,data,max){const host=$(id);host.replaceChildren();if(!data){svg('text',{x:240,y:195,'text-anchor':'middle'},host,'No unique actual projector');return;}const n=data.length,size=300/n,startX=90,startY=48;for(let i=0;i<n;i++){svg('text',{x:startX-16,y:startY+(i+.65)*size,'text-anchor':'end'},host,String(i));svg('text',{x:startX+(i+.5)*size,y:startY-14,'text-anchor':'middle'},host,String(i));for(let j=0;j<n;j++){const v=data[i][j],opacity=max===0?0:Math.min(1,Math.abs(v)/max);svg('rect',{x:startX+j*size,y:startY+i*size,width:size,height:size,fill:'#faf8f0',stroke:'#cdd5cc','stroke-width':.5},host);svg('rect',{x:startX+j*size+1,y:startY+i*size+1,width:size-2,height:size-2,fill:v>=0?'#24736c':'#b86c38','fill-opacity':opacity},host);}}svg('text',{x:240,y:380,'text-anchor':'middle'},host,`Shared range ±${number(max)}`);}
+function update(reset=false){
+ const c=D.cases.find(c=>c.id===$('case').value);if(reset){$('step').replaceChildren();for(const t of c.steps){const o=document.createElement('option');o.value=t;o.textContent=String(t);$('step').append(o);}$('step').value=c.status==='ok'?'0.1':'0';$('step').disabled=c.status!=='ok';$('row').replaceChildren();for(let i=0;i<c.weights.length;i++){const o=document.createElement('option');o.value=i;o.textContent=`Row ${i}`;$('row').append(o);}}
+ const step=Number($('step').value),row=Number($('row').value);selected=S.witness(c,step,row);const state=selected.state;
+ $('path-description').textContent=c.title;
+ $('status').textContent=c.status!=='ok'?`BASE REFUSED: ${c.reason}`:state.fit.status==='ok'?`SMOOTH BASE / FINITE REFIT OK. Base boundary gap ${number(c.witness.eigengap)}. No cluster-label derivative is claimed.`:`FINITE REFIT REFUSED: ${state.fit.reason}`;
+ const stats=c.status==='ok'?[[number(selected.scalar_checks.projector_distance),'actual projector change, Frobenius'],[number(selected.scalar_checks.linearization_error),'first-order approximation error'],[state.changed_labels_up_to_swap===null?'refused':String(state.changed_labels_up_to_swap),'assignments changed, up to label swap']]:[['refused','no unique valid base projector'],['not computed','no derivative is invented'],['6','all base graphs remain available']];
+ $('summary').replaceChildren();for(const [v,label]of stats){const div=document.createElement('div'),strong=document.createElement('strong'),span=document.createElement('span');strong.textContent=v;span.textContent=label;div.append(strong,span);$('summary').append(div);}
+ $('rounding-note').textContent=selected.near_tied_tested_partitions>1?`Rounding ambiguity: ${selected.near_tied_tested_partitions} distinct tested partitions have inertia within 1e-12 × (1 + |best inertia|). Changed-label counts describe the archive, not a unique preferred partition; another finite refit may resolve the tie differently.`:'';
+ graph(c,state);
+ $('finite-summary').textContent=c.status==='ok'?`Base ||P′||F = ${number(c.witness.tangent_frobenius)}. At t = ${step}, predicted change norm is ${number(state.linear_projector_distance)} and actual change is ${number(state.projector_distance)}. Actual finite eigenpairs and k-means are recomputed, not extrapolated from the derivative. Fixed-label cut ${number(state.fixed_cut)} versus first-order ${number(state.fixed_cut_linear)}.`:`This base graph is refused before differentiation. No heatmap, old matrix row or previous state data is retained. ${c.reason}.`;
+ const max=c.status==='ok'?Math.max(...(selected.actual_delta||[]).flat().map(Math.abs),...selected.linear_delta.flat().map(Math.abs),0):0;
+ heatmap('actual-matrix',selected.actual_delta,max);heatmap('linear-matrix',selected.linear_delta,max);
+ $('matrix-caption').textContent=c.status==='ok'?`Selected t = ${step}. Every entry is on a common ±${number(max)} scale. This state uses a ${c.weights.length} × ${c.weights.length} matrix.`:'No valid base derivative exists for this case. Both matrix panels and the numeric row are cleared.';
+ const tbody=$('matrix-row').querySelector('tbody');tbody.replaceChildren();for(const r of selected.matrix_row)tableRow(tbody,[r.column,number(r.base),number(r.tangent),number(r.actual),number(r.linear),number(r.error)]);
+ const states=$('states').querySelector('tbody');states.replaceChildren();for(const st of c.states)tableRow(states,[st.step,number(st.projector_distance),number(st.linear_projector_distance),number(st.linearization_error),st.changed_labels_up_to_swap===null?'refused':st.changed_labels_up_to_swap,number(st.fixed_cut),number(st.fixed_cut_linear),st.fit.status==='ok'?number(st.fit.cut.normalized_cut):'refused',st.fit.status]);
+ $('witness').textContent=JSON.stringify(selected,null,2);$('copy-status').textContent='';document.body.dataset.ready='true';
+}
+for(const c of D.cases){const o=document.createElement('option');o.value=c.id;o.textContent=c.title;$('case').append(o);}
+$('case').value='path';$('case').addEventListener('input',()=>update(true));for(const id of ['step','row'])$(id).addEventListener('input',()=>update());
+$('copy').addEventListener('click',async()=>{try{await navigator.clipboard.writeText($('witness').textContent);$('copy-status').textContent='State JSON copied.';}catch{$('copy-status').textContent='Clipboard unavailable. Open the full witness or download JSON.';}});
+$('download').addEventListener('click',()=>{const url=URL.createObjectURL(new Blob([$('witness').textContent+'\n'],{type:'application/json'})),a=document.createElement('a');a.href=url;a.download='spectrallab-sensitivity.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),30000);});
+update(true);
