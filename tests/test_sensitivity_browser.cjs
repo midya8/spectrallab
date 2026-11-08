@@ -28,6 +28,8 @@ test('real Chrome sensitivity28states, 168rowstates, finite tie/refusal, physica
   await js(`document.getElementById('case').value='path';document.getElementById('case').dispatchEvent(new Event('input'));document.getElementById('step').value='0.001';document.getElementById('step').dispatchEvent(new Event('input'))`);
   assert.equal(await js(`JSON.parse(document.getElementById('witness').textContent).state.changed_labels_up_to_swap`),1);
   assert.ok(await js(`JSON.parse(document.getElementById('witness').textContent).scalar_checks.projector_distance<.001`));
+  await js(`document.getElementById('step').value='0';document.getElementById('step').dispatchEvent(new Event('input'))`);
+  assert.match(await js(`document.getElementById('graph-caption').textContent`),/Zero-weight pair, no edge is drawn/);
   await js(`document.getElementById('step').value='1';document.getElementById('step').dispatchEvent(new Event('input'))`);
   assert.match(await js(`document.getElementById('status').textContent`),/FINITE REFIT REFUSED/);
   assert.equal(await js(`document.querySelectorAll('#actual-matrix rect').length`),0);
