@@ -87,6 +87,7 @@ def audit(report):
                 close(fit['raw_cut'][key], value, 'raw cut')
             expected = spectral(w)
             require(fit['status'] == expected['status'], 'status')
+            if fit['status'] != 'ok': require(fit.get('reason') == expected.get('reason'), 'refusal reason')
             checked['graphs'] += 1
             if 'eigenvalues' not in fit:
                 continue
