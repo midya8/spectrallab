@@ -90,6 +90,8 @@ def kmeans(points, seed=20261108, restarts=12, max_iter=200):
     x = points_array(points)
     if isinstance(restarts, bool) or not isinstance(restarts, int) or restarts < 1:
         raise ValueError('positive integer restarts required')
+    if isinstance(max_iter, bool) or not isinstance(max_iter, int) or max_iter < 1:
+        raise ValueError('positive integer iteration limit required')
     rng = np.random.default_rng(seed)
     runs = []
     for run in range(restarts):
@@ -158,6 +160,8 @@ def ari(truth, labels):
 
 def spectral(weights, seed=20261108):
     w = matrix(weights)
+    if len(w) < 3:
+        raise ValueError('at least three vertices required for a two-cluster boundary witness')
     groups = components(w)
     degree = w.sum(axis=1)
     base = {'components': groups, 'degrees': degree.tolist(), 'edges': int(np.count_nonzero(w) // 2)}
