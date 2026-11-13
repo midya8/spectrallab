@@ -1,11 +1,19 @@
 # SpectralLab
 
-The graph changes the answer. Inspect normalized spectral clustering through every affinity weight, eigenpair row and cut contribution, rather than treating an embedding as ground truth.
+SpectralLab fits normalized spectral clustering on small synthetic point sets. Inspect the affinity weights, eigenpairs, rounding restarts and cut contributions, then compare how different graph choices change the partition.
 
 [Live graph inspector](https://midya8.github.io/spectrallab/) · [Method and limits](METHOD.md) · [Reproducible archive](examples/report.json)
 
 
-## v0.2: smooth geometry, discrete labels
+## Choose a calculation
+
+The original inspector compares 18 fixed affinity graphs and their fitted
+partitions. The sensitivity inspector perturbs selected edge weights and
+compares first-order spectral geometry with actual finite refits. The latter
+is not a derivative of the discrete labels: k-means rounding and its restarts
+remain separate from the projector calculation.
+
+## Edge-weight sensitivity (0.2)
 
 [Open the graph-weight sensitivity inspector](https://midya8.github.io/spectrallab/sensitivity.html).
 Manual normalized-Laplacian derivatives include both degree responses; a
@@ -36,7 +44,7 @@ python -m spectrallab.sensitivity audit sensitivity.json
 python -m spectrallab.sensitivity export examples/sensitivity.json > docs/sensitivity-data.js
 ```
 
-## What runs
+## Graphs and fits
 
 - Manual full RBF, union-kNN and mutual-kNN graphs, with explicit zero self-loops and distance/index tie order.
 - Symmetric normalized Laplacian, its two smallest eigenvectors including the trivial mode, unit-row normalization, and manual two-cluster k-means. **NumPy supplies `eigh`/LAPACK**, array arithmetic and random numbers. This is not a handwritten eigensolver or a wrapper around a clustering library.
@@ -44,7 +52,7 @@ python -m spectrallab.sensitivity export examples/sensitivity.json > docs/sensit
 - Complete degree/component/eigenspectrum/three-eigenvector/embedding/restart/cut witnesses, reconstructed in scalar JavaScript. Pick any graph and point, compare `L u` with `lambda u`, inspect all neighbors, change display-only edge threshold and export real JSON.
 - Refusal of isolated vertices, more than two components, a retained-boundary eigengap at most 1e-10, or a zero embedding row. No invented edges or arbitrary nullspace truncation.
 
-## Results that remain visible
+## Synthetic results
 
 These are **designed synthetic transductive illustrations**, not held-out accuracy or real-world validation. The geometry and all graph settings were fixed before running them. Generator labels are used only for post-fit ARI audits. Default union-6 is an explicit UI default, not a learned choice.
 
@@ -87,11 +95,11 @@ print(fit["status"], fit.get("fit", {}).get("labels"))
 
 ## Verification
 
-**22 Python tests** include 528 independent Fraction-distance kNN graph references, 558 rational normalized-cut references, analytic cycle spectra/energy identities, degree and component edge cases, row/subspace rotation invariance, a repeated-eigenvalue boundary counterexample, all 18 fresh fits, full archive audits, provenance/metric/eigenvector/label mutations and strict CLI validation.
+The original 22 Python tests include 528 independent Fraction-distance kNN graph references, 558 rational normalized-cut references, analytic cycle spectra/energy identities, degree and component edge cases, row/subspace rotation invariance, a repeated-eigenvalue boundary counterexample, all 18 fresh fits, full archive audits, provenance/metric/eigenvector/label mutations and strict CLI validation.
 
-**Six Node/real-Chrome tests** check all 18 scalar graphs and 4,896 eigenpair-row equations, all 17 fitted cuts and 18 raw cuts, independent BigInt enumeration of 63 tiny-graph cuts, every dataset script, 1,728 browser graph/point states, refusal clearing, physical keyboard threshold changes that do not alter a fit, graph-point selection, clipboard success/failure, actual downloaded Blob JSON, and 320/390/1280 layouts with 44-pixel controls. The browser test requires Node 22+ and Chrome; it uses Chrome's debugging protocol without a browser automation package.
+The original six Node/real-Chrome tests check all 18 scalar graphs and 4,896 eigenpair-row equations, all 17 fitted cuts and 18 raw cuts, independent BigInt enumeration of 63 tiny-graph cuts, every dataset script, 1,728 browser graph/point states, refusal clearing, physical keyboard threshold changes that do not alter a fit, graph-point selection, clipboard success/failure, actual downloaded Blob JSON, and 320/390/1280 layouts with 44-pixel controls. The browser test requires Node 22+ and Chrome; it uses Chrome's debugging protocol without a browser automation package.
 
-Installed-wheel reproduction: `pip wheel --no-deps . -w dist`, install the wheel, then `sh examples/verify_wheel.sh`. It changes to a clean temporary directory, unsets `PYTHONPATH`, imports all five installed modules, executes five commands, fits all 18 graphs, audits fresh and archived reports, and verifies three archived web scripts byte-for-byte. CI covers Python 3.10-3.13, package reproduction and Chrome. Floating comparisons are finite/tolerance-bound; discrete metadata stays exact. Eigenspace comparisons use projectors, never eigenvector signs.
+Installed-wheel reproduction: `pip wheel --no-deps . -w dist`, install the wheel, then `sh examples/verify_wheel.sh`. It changes to a clean temporary directory, unsets `PYTHONPATH`, imports six installed modules, executes five original commands plus four sensitivity commands, fits all 18 graphs, audits fresh and archived reports, and verifies three archived web scripts byte-for-byte. CI covers Python 3.10-3.13, package reproduction and Chrome. Floating comparisons are finite/tolerance-bound; discrete metadata stays exact. Eigenspace comparisons use projectors, never eigenvector signs.
 
 ## Scope
 
